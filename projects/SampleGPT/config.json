@@ -1,0 +1,14 @@
+{
+    "project_name": "SampleGPT",
+    "files": [
+        {
+            "path": "data\\sample.pdf",
+            "type": "base"
+        }
+    ],
+    "target_language": "en",
+    "remove_headers": true,
+    "remove_footers": true,
+    "remove_page_numbers": true,
+    "remove_watermarks": true
+}

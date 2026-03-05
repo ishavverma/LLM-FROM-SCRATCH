@@ -1,0 +1,423 @@
+/* Global Variables & Reset */
+:root {
+    --bg-color: #0d1117;
+    --sidebar-bg: #161b22;
+    --border-color: #30363d;
+    --text-primary: #c9d1d9;
+    --text-secondary: #8b949e;
+
+    --accent-primary: #8a2be2;
+    --accent-secondary: #ff007f;
+    --accent-gradient: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+
+    --user-msg-bg: #1f242e;
+    --bot-msg-bg: transparent;
+
+    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-family);
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* Layout Setup */
+.app-container {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 300px;
+    background-color: var(--sidebar-bg);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+    position: relative;
+    z-index: 10;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 2rem;
+}
+
+.logo-icon {
+    font-size: 1.8rem;
+    background: var(--accent-gradient);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.logo-text {
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.settings-panel {
+    flex: 1;
+}
+
+.settings-panel h3 {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    letter-spacing: 0.05em;
+    margin-bottom: 1.2rem;
+}
+
+.setting-group {
+    margin-bottom: 1.5rem;
+}
+
+.setting-group label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+/* Custom Select styling using glassmorphism hints */
+.custom-select select {
+    width: 100%;
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    padding: 0.6rem;
+    border-radius: 6px;
+    font-family: var(--font-family);
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+}
+
+.custom-select select:focus {
+    border-color: var(--accent-primary);
+}
+
+/* Slider styling */
+.slider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--border-color);
+    outline: none;
+    border-radius: 2px;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--text-primary);
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.slider::-webkit-slider-thumb:hover {
+    background: #fff;
+    box-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
+}
+
+.sidebar-footer {
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.secondary-btn {
+    width: 100%;
+    padding: 0.75rem;
+    background-color: transparent;
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: var(--font-family);
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.secondary-btn:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Main Chat Area */
+.chat-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    background: radial-gradient(circle at 50% -20%, rgba(138, 43, 226, 0.05), var(--bg-color));
+}
+
+.chat-header {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: rgba(13, 17, 23, 0.7);
+    backdrop-filter: blur(10px);
+    z-index: 5;
+}
+
+.chat-header h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.pulse {
+    width: 8px;
+    height: 8px;
+    background-color: #3fb950;
+    border-radius: 50%;
+    box-shadow: 0 0 8px rgba(63, 185, 80, 0.8);
+    position: relative;
+}
+
+/* Messages Area */
+.messages {
+    flex: 1;
+    padding: 2rem 15%;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    scroll-behavior: smooth;
+}
+
+.message {
+    display: flex;
+    flex-direction: column;
+    max-width: 85%;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.message-content {
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    line-height: 1.6;
+    font-size: 0.95rem;
+    letter-spacing: 0.01em;
+    word-wrap: break-word;
+}
+
+/* User Message */
+.user-message {
+    align-self: flex-end;
+}
+
+.user-message .message-content {
+    background-color: var(--user-msg-bg);
+    border: 1px solid var(--border-color);
+    border-bottom-right-radius: 2px;
+}
+
+/* Bot Message */
+.bot-message {
+    align-self: flex-start;
+}
+
+.bot-message .message-content {
+    background-color: var(--bot-msg-bg);
+    border-left: 3px solid var(--accent-primary);
+    border-radius: 0;
+    padding-left: 1.5rem;
+}
+
+/* System logic */
+.system-message {
+    align-self: center;
+    max-width: 100%;
+}
+
+.system-message .message-content {
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    text-align: center;
+}
+
+.error-text {
+    color: #f85149;
+    font-weight: 500;
+}
+
+/* Input Area */
+.input-area {
+    padding: 1.5rem 15%;
+    background-color: var(--bg-color);
+    position: relative;
+}
+
+.input-area::before {
+    content: '';
+    position: absolute;
+    top: -40px;
+    left: 0;
+    right: 0;
+    height: 40px;
+    background: linear-gradient(to top, var(--bg-color), transparent);
+    pointer-events: none;
+}
+
+.input-form {
+    display: flex;
+    align-items: flex-end;
+    gap: 1rem;
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 0.5rem 0.5rem 0.5rem 1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input-form:focus-within {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 15px rgba(138, 43, 226, 0.15);
+}
+
+.input-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+textarea {
+    width: 100%;
+    min-height: 50px;
+    max-height: 200px;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-family: var(--font-family);
+    font-size: 0.95rem;
+    resize: none;
+    padding: 0.8rem 0;
+    line-height: 1.5;
+    outline: none;
+}
+
+textarea::placeholder {
+    color: var(--text-secondary);
+}
+
+.primary-btn {
+    width: 45px;
+    height: 45px;
+    border-radius: 12px;
+    border: none;
+    background: var(--accent-gradient);
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    flex-shrink: 0;
+    margin-bottom: 2px;
+}
+
+.primary-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(255, 0, 127, 0.4);
+}
+
+/* Typing Indicator (CSS Animations) */
+.typing-indicator {
+    display: inline-flex;
+    gap: 2px;
+}
+
+.typing-indicator span {
+    animation: blink 1.4s infinite both;
+    height: 6px;
+    width: 6px;
+    background-color: var(--text-primary);
+    border-radius: 50%;
+    display: inline-block;
+    margin: 0 2px;
+}
+
+.typing-indicator span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.typing-indicator span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes blink {
+    0% {
+        opacity: 0.2;
+        transform: scale(0.8);
+    }
+
+    20% {
+        opacity: 1;
+        transform: scale(1.2);
+    }
+
+    100% {
+        opacity: 0.2;
+        transform: scale(0.8);
+    }
+}
+
+/* Scrollbar customization */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+}

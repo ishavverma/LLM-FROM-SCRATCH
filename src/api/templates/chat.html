@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ project_name }} - AI Assistant</title>
+    <!-- Use Inter font for a clean, modern aesthetic -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Options -->
+        <aside class="sidebar">
+            <div class="logo-container">
+                <span class="logo-icon">✨</span>
+                <h1 class="logo-text">{{ project_name }}</h1>
+            </div>
+            
+            <div class="settings-panel">
+                <h3>Settings</h3>
+                
+                <div class="setting-group">
+                    <label for="model-type">Model Type</label>
+                    <div class="custom-select">
+                        <select id="model-type">
+                            <option value="chat" selected>Chat Template</option>
+                            <option value="instruct">Instruct Template</option>
+                            <option value="base">Base (Raw completion)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="setting-group">
+                    <label for="max-tokens">Max Tokens: <span id="token-val">150</span></label>
+                    <input type="range" id="max-tokens" min="10" max="500" value="150" class="slider">
+                </div>
+            </div>
+
+            <div class="sidebar-footer">
+                <button id="clear-btn" class="secondary-btn">🗑️ Clear Chat</button>
+            </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="chat-container">
+            <header class="chat-header">
+                <h2>{{ project_name }} Inference Engine</h2>
+                <div class="status-indicator">
+                    <span class="pulse"></span> Ready
+                </div>
+            </header>
+            
+            <div class="messages" id="chat-messages">
+                <!-- Chat messages will be dynamically inserted here -->
+                <div class="message system-message">
+                    <div class="message-content">
+                        Hello! I am your custom Language Model. How can I assist you today?
+                    </div>
+                </div>
+            </div>
+            
+            <div class="input-area">
+                <form id="chat-form" class="input-form">
+                    <div class="input-wrapper">
+                        <textarea id="prompt-input" placeholder="Type your message..." rows="1" required></textarea>
+                    </div>
+                    <button type="submit" id="send-btn" class="primary-btn">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="send-icon">
+                            <path d="M2.01 21L23 12L2.01 3L2 10L17 12L2 14L2.01 21Z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('chat-form');
+            const input = document.getElementById('prompt-input');
+            const messagesContainer = document.getElementById('chat-messages');
+            const tokenSlider = document.getElementById('max-tokens');
+            const tokenVal = document.getElementById('token-val');
+            const modelTypeSelect = document.getElementById('model-type');
+            const clearBtn = document.getElementById('clear-btn');
+            
+            // Auto-resize textarea
+            input.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+                if(this.value === '') {
+                   this.style.height = '50px';
+                }
+            });
+            
+            // Update token slider label
+            tokenSlider.addEventListener('input', (e) => {
+                tokenVal.textContent = e.target.value;
+            });
+            
+            // Handle enter key to submit (Shift+Enter for new line)
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    if(input.value.trim()) {
+                        form.dispatchEvent(new Event('submit'));
+                    }
+                }
+            });
+
+            clearBtn.addEventListener('click', () => {
+                messagesContainer.innerHTML = `
+                <div class="message system-message">
+                    <div class="message-content">
+                        Chat cleared. Ready for new prompts.
+                    </div>
+                </div>`;
+            });
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const prompt = input.value.trim();
+                if (!prompt) return;
+                
+                const maxTokens = parseInt(tokenSlider.value);
+                const dsType = modelTypeSelect.value;
+                
+                // Add user message to UI
+                appendMessage('user', prompt);
+                input.value = '';
+                input.style.height = '50px';
+                
+                // Create bot message placeholder
+                const botMessageId = 'msg-' + Date.now();
+                appendMessage('bot', '<span class="typing-indicator"><span>.</span><span>.</span><span>.</span></span>', botMessageId);
+                const botMessageElement = document.getElementById(botMessageId).querySelector('.message-content');
+                let fullResponse = "";
+                
+                // Fetch SSE stream
+                try {
+                    const response = await fetch('/generate', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            prompt: prompt,
+                            max_tokens: maxTokens,
+                            type: dsType
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        const errText = await response.text();
+                        botMessageElement.innerHTML = `<span class="error-text">Network Error: ${response.status}</span>`;
+                        return;
+                    }
+                    
+                    botMessageElement.innerHTML = ''; // clear typing indicator
+                    
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder("utf-8");
+                    
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        
+                        const chunk = decoder.decode(value, {stream: true});
+                        const lines = chunk.split('\n');
+                        
+                        for (let line of lines) {
+                            if (line.startsWith('data: ')) {
+                                try {
+                                    const data = JSON.parse(line.substring(6));
+                                    
+                                    if (data.error) {
+                                        botMessageElement.innerHTML += `<br><span class="error-text">${data.error}</span>`;
+                                    } else if (data.text) {
+                                        fullResponse += data.text;
+                                        // Replace newlines with <br> for HTML display
+                                        botMessageElement.innerHTML = escapeHtml(fullResponse).replace(/\n/g, '<br>');
+                                        scrollToBottom();
+                                    } else if (data.status === 'generating') {
+                                        // Starting to generate
+                                    } else if (data.status === 'done') {
+                                        // finished
+                                    }
+                                } catch(err) {
+                                    console.error("Error parsing SSE JSON", err, line);
+                                }
+                            }
+                        }
+                    }
+                    
+                } catch (error) {
+                    botMessageElement.innerHTML = `<span class="error-text">Error: ${error.message}</span>`;
+                }
+            });
+            
+            function appendMessage(sender, text, id = null) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${sender}-message`;
+                if(id) messageDiv.id = id;
+                
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'message-content';
+                contentDiv.innerHTML = sender === 'user' ? escapeHtml(text).replace(/\n/g, '<br>') : text;
+                
+                messageDiv.appendChild(contentDiv);
+                messagesContainer.appendChild(messageDiv);
+                scrollToBottom();
+            }
+            
+            function scrollToBottom() {
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+            
+            function escapeHtml(unsafe) {
+                return unsafe
+                     .replace(/&/g, "&amp;")
+                     .replace(/</g, "&lt;")
+                     .replace(/>/g, "&gt;")
+                     .replace(/"/g, "&quot;")
+                     .replace(/'/g, "&#039;");
+            }
+        });
+    </script>
+</body>
+</html>
