@@ -36,7 +36,7 @@ This project doesn't just replicate basic Transformers; it implements the modern
 
 1. **Clone & Enter Registry:**
    ```bash
-   git clone <repo-url>
+   git clone https://github.com/ishavverma/LLM-FROM-SCRATCH.git
    cd LLM-FROM-SCRATCH
    ```
 
